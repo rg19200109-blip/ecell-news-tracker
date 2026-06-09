@@ -1,6 +1,8 @@
 const axios = require('axios');
+const cheerio = require('cheerio');
 
 const source = 'Entrackr';
+const toPlainText = (content = '') => cheerio.load(`<div>${content}</div>`)('div').text().trim();
 
 const scrapeEntrackr = async () => {
   const response = await axios.get('https://entrackr.com/feed/', { timeout: 15000 });
@@ -11,9 +13,7 @@ const scrapeEntrackr = async () => {
     const title = (block.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/)?.[1] || '').trim();
     const url = (block.match(/<link>(.*?)<\/link>/)?.[1] || '').trim();
     const date = block.match(/<pubDate>(.*?)<\/pubDate>/)?.[1];
-    const summary = (block.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/)?.[1] || '')
-      .replace(/<[^>]*>/g, '')
-      .trim();
+    const summary = toPlainText(block.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/)?.[1] || '');
 
     return {
       title,

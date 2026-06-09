@@ -1,5 +1,18 @@
 const News = require('../models/News');
 
+const allowedCategories = new Set(['Funding', 'Startups', 'Events', 'Jobs', 'Markets', 'Policy', 'General']);
+
+const safeString = (value) => (typeof value === 'string' ? value.trim() : '');
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const safeDate = (value) => {
+  if (typeof value !== 'string' || !value.trim()) {
+    return null;
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
 const listNews = async (query) => {
   const {
     category,
@@ -12,19 +25,27 @@ const listNews = async (query) => {
   } = query;
 
   const filter = {};
+  const safeCategory = safeString(category);
+  const safeSource = safeString(source);
+  const safeSearch = safeString(search);
+  const parsedStartDate = safeDate(startDate);
+  const parsedEndDate = safeDate(endDate);
 
-  if (category) filter.category = category;
-  if (source) filter.source = source;
-  if (search) {
+  if (safeCategory && allowedCategories.has(safeCategory)) {
+    filter.category = safeCategory;
+  }
+  if (safeSource) filter.source = safeSource;
+  if (safeSearch) {
+    const searchPattern = new RegExp(escapeRegex(safeSearch), 'i');
     filter.$or = [
-      { title: { $regex: search, $options: 'i' } },
-      { summary: { $regex: search, $options: 'i' } }
+      { title: searchPattern },
+      { summary: searchPattern }
     ];
   }
-  if (startDate || endDate) {
+  if (parsedStartDate || parsedEndDate) {
     filter.date = {};
-    if (startDate) filter.date.$gte = new Date(startDate);
-    if (endDate) filter.date.$lte = new Date(endDate);
+    if (parsedStartDate) filter.date.$gte = parsedStartDate;
+    if (parsedEndDate) filter.date.$lte = parsedEndDate;
   }
 
   const safePage = Math.max(Number(page) || 1, 1);

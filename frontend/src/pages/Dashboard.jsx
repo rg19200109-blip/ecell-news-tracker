@@ -17,7 +17,7 @@ export default function Dashboard() {
   const [month, setMonth] = useState(getCurrentMonth());
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [subscriber, setSubscriber] = useState('rg19200109@gmail.com');
+  const [subscriber, setSubscriber] = useState('');
   const [status, setStatus] = useState('');
 
   const newsParams = useMemo(() => ({ ...filters, limit: 50 }), [filters]);

@@ -51,4 +51,21 @@ const sendMonthlyDigest = async (report, recipient = env.digestEmail) => {
   return { skipped: false };
 };
 
-module.exports = { sendMonthlyDigest };
+const sendMonthlyDigestBatch = async (report, recipients = []) => {
+  const uniqueRecipients = [...new Set([env.digestEmail, ...recipients].filter(Boolean))];
+  const results = [];
+
+  for (const recipient of uniqueRecipients) {
+    try {
+      const result = await sendMonthlyDigest(report, recipient);
+      results.push({ recipient, ...result });
+    } catch (err) {
+      logger.error('Failed to send monthly digest', { recipient, error: err.message });
+      results.push({ recipient, skipped: true, error: err.message });
+    }
+  }
+
+  return results;
+};
+
+module.exports = { sendMonthlyDigest, sendMonthlyDigestBatch };
